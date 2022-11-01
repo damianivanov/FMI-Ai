@@ -124,21 +124,21 @@ class Board
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
         if (f > bound) return f;
-        if (currNode.IsGoal(this._goalState)) return 0;
+        if (currNode.IsGoal(this._goalState)) 
+            return 0;
         int min = int.MaxValue;
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            if(!sameField(currNode._tiles,node.Value._tiles))
-            {
-                path.Push(node.Value);
-                this.PathString.Push(node.Key);
-                int t = Search(path, currentCost + 1, bound);
-                if (t == 0) return 0;
-                if (t < min) min = t;
-                PathString.Pop();
-                path.Pop();
-            }
+            if (currNode.ManhattanDistance == node.Value.ManhattanDistance && sameField(currNode._tiles, node.Value._tiles)) 
+                continue;
+            path.Push(node.Value);
+            this.PathString.Push(node.Key);
+            int t = Search(path, currentCost + 1, bound);
+            if (t == 0) return 0;
+            if (t < min) min = t;
+            PathString.Pop();
+            path.Pop();
         }
         return min;
     }

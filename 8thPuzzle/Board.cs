@@ -2,10 +2,10 @@ using System.Text;
 
 class Board
 {
-    
+
     private readonly int _indexOfZero;
     private int[,] _tiles;
-    
+
     private Tuple<int, int> _currIndexOfZero;
     private int ManhattanDistance { get; set; }
     public int[,] _goalState { get; private set; }
@@ -14,7 +14,7 @@ class Board
     public int Size { get; }
     public int FinalIndexOfZero { get; private set; }
 
-    public Board(int boardSize, int[,] board, int indexOfZero = -1, int[,]? goalState = null,Tuple<int,int>? currIndexOfZero = null)
+    public Board(int boardSize, int[,] board, int indexOfZero = -1, int[,]? goalState = null, Tuple<int, int>? currIndexOfZero = null)
     {
         Size = boardSize;
         FinalIndexOfZero = indexOfZero;
@@ -22,10 +22,10 @@ class Board
         this._tiles = (board.Clone() as int[,])!;
         this._goalState = goalState;
         if (currIndexOfZero == null) this._currIndexOfZero = FindIndexOfValue(0, this._tiles);
-        else _currIndexOfZero = currIndexOfZero; 
+        else _currIndexOfZero = currIndexOfZero;
         // ManhattanDistance = Manhattan();
     }
-    
+
     public void Solve()
     {
         if (!IsSolvable()) Console.WriteLine("Not Solvable");
@@ -35,7 +35,7 @@ class Board
             Ida_star();
         }
     }
-    
+
     private int InversionCount(int[] numbers)
     {
         int inversions = 0;
@@ -55,8 +55,8 @@ class Board
         int[] tiles = new int[Size * Size];
         int index = 0;
         for (int i = 0; i < Size; i++)
-        for (int j = 0; j < Size; j++)
-            tiles[index++] = _tiles[i, j];
+            for (int j = 0; j < Size; j++)
+                tiles[index++] = _tiles[i, j];
         // row of 0 + inversion count, ako e cheten size-a 
         if (Size % 2 == 0) return (InversionCount(tiles) + _currIndexOfZero.Item1) % 2 != 0;
         else return InversionCount(tiles) % 2 == 0;
@@ -74,14 +74,13 @@ class Board
             .OrderBy(b => b.Value.ManhattanDistance)
             .ToDictionary(b => b.Key, b => b.Value);
     }
-    
+
     private Board? Move(int tilesX, int tilesY)
     {
         try
         {
-            var board = new Board(Size, _tiles, FinalIndexOfZero,null,this._currIndexOfZero);
-            board.Swap(_currIndexOfZero,
-                Tuple.Create(_currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY));
+            var board = new Board(Size, _tiles, FinalIndexOfZero, null, this._currIndexOfZero);
+            board.Swap(_currIndexOfZero, _currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
             board._currIndexOfZero = new Tuple<int, int>(_currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
 
             board.Manhattan();
@@ -92,26 +91,18 @@ class Board
             return null;
         }
     }
-    private int NewDistance(int tilesX, int tilesY)
+
+    private void Swap(Tuple<int, int> ind1, int newX, int newY)
     {
-        var oldIndexOfZero = Tuple.Create(_currIndexOfZero.Item1 - tilesX, _currIndexOfZero.Item2 - tilesY);
-        var goalIndex = FindIndexOfValueGoalState(_tiles[oldIndexOfZero.Item1, oldIndexOfZero.Item2]);
-        int newDistanceToGoal = Distance(oldIndexOfZero, goalIndex);
-        int oldDistanceToGoal = Distance(_currIndexOfZero,goalIndex);
-        return oldDistanceToGoal - newDistanceToGoal;
+        (_tiles[ind1.Item1, ind1.Item2], _tiles[newX, newY]) =
+            (_tiles[newX, newY], _tiles[ind1.Item1, ind1.Item2]);
     }
 
-    private void Swap(Tuple<int, int> ind1, Tuple<int, int> ind2)
-    {
-        (_tiles[ind1.Item1, ind1.Item2], _tiles[ind2.Item1, ind2.Item2]) =
-            (_tiles[ind2.Item1, ind2.Item2], _tiles[ind1.Item1, ind1.Item2]);
-    }
-    
     private void Ida_star()
     {
         int bound = ManhattanDistance;
         Path.Push(this);
-        while (true)
+        while (Path.Count > 0)
         {
             int t = Search(Path, 0, bound);
             if (t == 0) return;
@@ -124,30 +115,28 @@ class Board
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
         if (f > bound) return f;
-        if (currNode.IsGoal(this._goalState)) 
-            return 0;
+        if (currNode.IsGoal(this._goalState)) return 0;
         int min = int.MaxValue;
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            if (currNode.ManhattanDistance == node.Value.ManhattanDistance && sameField(currNode._tiles, node.Value._tiles)) 
-                continue;
-            path.Push(node.Value);
+            if (node.Equals(currNode)) { continue; }
+            path.Push(node.Value!);
             this.PathString.Push(node.Key);
             int t = Search(path, currentCost + 1, bound);
             if (t == 0) return 0;
             if (t < min) min = t;
             PathString.Pop();
             path.Pop();
+
         }
         return min;
     }
-
     private bool sameField(int[,] arr1, int[,] arr2)
     {
         for (int i = 0; i < arr1.GetLength(0); i++)
-        for (int j = 0; j < arr1.GetLength(0); j++)
-                if (arr1[i,j]!=arr2[i,j])
+            for (int j = 0; j < arr1.GetLength(0); j++)
+                if (arr1[i, j] != arr2[i, j])
                     return false;
         return true;
     }
@@ -155,9 +144,9 @@ class Board
     private Tuple<int, int> FindIndexOfValue(int value, int[,] board)
     {
         for (var i = 0; i < Size; i++)
-        for (var j = 0; j < Size; j++)
-            if (board[i, j] == value)
-                return Tuple.Create(i, j);
+            for (var j = 0; j < Size; j++)
+                if (board[i, j] == value)
+                    return Tuple.Create(i, j);
 
         return Tuple.Create(-1, -1);
     } //O(n^2)
@@ -168,27 +157,24 @@ class Board
         int i = Convert.ToInt32((value - 1) / Size);
         int j = ((value - 1) % Size);
         return Tuple.Create(i, j);
+
     } // O(1)
     private void Manhattan()
     {
         int manhattanDistance = 0;
         for (var i = 0; i < Size; i++)
-        for (var j = 0; j < Size; j++)
-            if (_tiles[i, j] != 0)
-                manhattanDistance += Distance(FindIndexOfValueGoalState(_tiles[i, j]), Tuple.Create(i, j));
+            for (var j = 0; j < Size; j++)
+                if (_tiles[i, j] != 0)
+                    manhattanDistance += Distance(FindIndexOfValueGoalState(_tiles[i, j]), i, j);
         this.ManhattanDistance = manhattanDistance;
     } //O(n^2)
-    private int Distance(Tuple<int, int> el1, Tuple<int, int> el2)
-    {
-        return Math.Abs(el1.Item1 - el2.Item1) + Math.Abs(el1.Item2 - el2.Item2);
-    }
-
+    private int Distance(Tuple<int, int> el1, int i, int j) => Math.Abs(el1.Item1 - i) + Math.Abs(el1.Item2 - j);
     private bool IsGoal(int[,] goalState)
     {
         for (var i = 0; i < Size; i++)
-        for (int j = 0; j < Size; j++)
-            if (this._tiles[i, j] != goalState[i, j])
-                return false;
+            for (int j = 0; j < Size; j++)
+                if (this._tiles[i, j] != goalState[i, j])
+                    return false;
         return true;
     }
 
@@ -238,7 +224,7 @@ class Board
         Console.WriteLine(finalPath.Count);
         Console.WriteLine(string.Join(Environment.NewLine, finalPath));
     }
-    
+
     public override string ToString()
     {
         return PrintField(_tiles);
@@ -248,7 +234,7 @@ class Board
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        return _indexOfZero == other._indexOfZero && _tiles.Equals(other._tiles) && Size == other.Size;
+        return ManhattanDistance == other.ManhattanDistance && _indexOfZero == other._indexOfZero && _tiles.Equals(other._tiles) && Size == other.Size;
     }
 
     public override bool Equals(object? obj)

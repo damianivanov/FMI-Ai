@@ -9,8 +9,8 @@ var goalState = new int[boardSize, boardSize];
 //GOAL State
 var counter = 1;
 for (var i = 0; i < boardSize; i++)
-for (var j = 0; j < boardSize; j++)
-    goalState[i, j] = (i * boardSize + j == indexOfZero) ? 0 : counter++;
+    for (var j = 0; j < boardSize; j++)
+        goalState[i, j] = (i * boardSize + j == indexOfZero) ? 0 : counter++;
 
 if (indexOfZero == -1) goalState[boardSize - 1, boardSize - 1] = 0;
 //
@@ -25,7 +25,7 @@ for (int i = 0; i < boardSize; i++)
 }
 // --------------------------------------------
 
-var board = new Board(boardSize, boardInput, indexOfZero,goalState);
+var board = new Board(boardSize, boardInput, indexOfZero, goalState);
 Console.WriteLine("---------START-------");
 var watch = Stopwatch.StartNew();
 board.Solve();
@@ -106,48 +106,15 @@ U L D D R U U R D L L D R R U U L D L U - 00:263
 3 1 8
 07:678
 
-8
--1
-0 8 7
-6 5 4
-3 2 1
-00:043
-//INVERTED
-
-
-8
--1
-8 7 0
-6 3 2
-5 4 1
-08:940 //REALLY BIG TREE
 
 8
 -1
 2 1 4
 3 0 8
 7 6 5
-01:522
 
-8
--1
-3 2 4
-7 8 0
-6 1 5
-00:814
 
-8
--1
-7 5 4
-0 1 8
-2 3 6
 
-15
--1
-4 6 9 0
-16 14 1 10
-7 5 13 2
-3 8 11 12
 
 15
 -1
@@ -183,8 +150,4 @@ U L D D R U U R D L L D R R U U L D L U - 00:263
 5 6 7 8
 9 10 11 12
 13 15 14 0
-
-
-
-
 */

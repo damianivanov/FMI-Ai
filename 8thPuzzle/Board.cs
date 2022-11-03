@@ -6,7 +6,7 @@ class Board
     public int[,] _tiles;
 
     private Tuple<int, int> _currIndexOfZero;
-    private int ManhattanDistance { get; set; }
+    public int ManhattanDistance { get; set; }
     public int[,] _goalState { get; private set; }
     public Stack<string> PathString { get; set; } = new Stack<string>();
     public Stack<Board> Path { get; set; } = new Stack<Board>();
@@ -135,21 +135,21 @@ class Board
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
         if (f > bound) return f;
-        if (currNode.IsGoal(this._goalState)) return 0;
+        if (currNode.ManhattanDistance==0 && currNode.IsGoal(this._goalState)) return 0;
         int min = int.MaxValue;
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            // if (node.Value!.Equals(currNode))
-            // {
-            //     continue;
-            // }
+            if (path.Contains(node.Value!))
+            {
+                continue;
+            }
 
             PathString.Push(node.Key);
             path.Push(node.Value!);
-            int t = Search(path, currentCost + 1, bound);
+            int t = Search(path, currentCost+1, bound);
             if (t == 0) return 0;
-            if (t < min) min = t;
+            if (t <= min) min = t;
             PathString.Pop();
             path.Pop();
         }

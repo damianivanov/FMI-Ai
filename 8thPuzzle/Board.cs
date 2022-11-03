@@ -2,8 +2,8 @@ using System.Text;
 
 class Board
 {
-    private readonly int _indexOfZero;
-    private int[,] _tiles;
+    
+    public int[,] _tiles;
 
     private Tuple<int, int> _currIndexOfZero;
     private int ManhattanDistance { get; set; }
@@ -18,7 +18,6 @@ class Board
     {
         Size = boardSize;
         FinalIndexOfZero = indexOfZero;
-        this._indexOfZero = indexOfZero;
         this._tiles = (board.Clone() as int[,])!;
         this._goalState = goalState;
         if (currIndexOfZero == null) this._currIndexOfZero = FindIndexOfValue(0, this._tiles);
@@ -71,7 +70,7 @@ class Board
                 { "Left", Left() },
                 { "Right", Right() }
             }.Where(b => b.Value != null)
-            .OrderBy(b => b.Value.ManhattanDistance)
+            .OrderBy(b => b.Value!.ManhattanDistance)
             .ToDictionary(b => b.Key, b => b.Value);
     }
 
@@ -79,6 +78,9 @@ class Board
     {
         try
         {
+            if(!InsideMatrix(_currIndexOfZero.Item1+tilesX,_currIndexOfZero.Item2+tilesY)){
+                return null;
+            }
             var oldZeroIndex = this._currIndexOfZero;
             var board = new Board(Size, _tiles, FinalIndexOfZero, null, this._currIndexOfZero);
             board.Swap(_currIndexOfZero, _currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
@@ -86,8 +88,9 @@ class Board
                 new Tuple<int, int>(_currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
 
             board.ManhattanDistance = this.ManhattanDistance;
-            board.ManhattanDistance += board.NewDistance(oldZeroIndex, board._currIndexOfZero);
-            //board.Manhattan();
+            board.ManhattanDistance += board.ModifiedManhatanDistance(oldZeroIndex, board._currIndexOfZero);
+            
+            // board.Manhattan();
             return board;
         }
         catch (IndexOutOfRangeException)
@@ -96,7 +99,12 @@ class Board
         }
     }
 
-    private int NewDistance(Tuple<int, int> oldZero, Tuple<int, int> newZero)
+    private bool InsideMatrix(int newX, int newY)
+    {
+        return newX >= 0 && newY >= 0 && newX < Size && newY < Size;
+    }
+
+    private int ModifiedManhatanDistance(Tuple<int, int> oldZero, Tuple<int, int> newZero)
     {
         var goalIndex = FindIndexOfValueGoalState(_tiles[oldZero.Item1, oldZero.Item2]);
         var oldDistance = Distance(newZero, goalIndex.Item1, goalIndex.Item2);
@@ -132,13 +140,13 @@ class Board
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            if (node.Equals(currNode))
-            {
-                continue;
-            }
+            // if (node.Value!.Equals(currNode))
+            // {
+            //     continue;
+            // }
 
+            PathString.Push(node.Key);
             path.Push(node.Value!);
-            this.PathString.Push(node.Key);
             int t = Search(path, currentCost + 1, bound);
             if (t == 0) return 0;
             if (t < min) min = t;
@@ -217,57 +225,20 @@ class Board
     {
         return Move(0, 1);
     }
+    
 
-    private string PrintField(int[,] array)
-    {
-        var str = new StringBuilder();
-        str.Append(Size);
-        str.AppendLine();
-        for (var i = 0; i < Size; i++)
-        {
-            for (int j = 0; j < Size; j++)
-            {
-                str.Append(array[i, j]);
-                str.Append(' ');
-            }
+    
 
-            str.AppendLine();
-        }
-
-        return str.ToString();
-    } //O(n^2)
-
-    public void PrintSolution()
-    {
-        List<string> finalPath = PathString.ToList();
-        finalPath.Reverse();
-        Console.WriteLine(finalPath.Count);
-        Console.WriteLine(string.Join(Environment.NewLine, finalPath));
-    }
-
-    public override string ToString()
-    {
-        return PrintField(_tiles);
-    } //O(n^2)
+    // public override string ToString()
+    // {
+    //     return PrintField(_tiles);
+    // } //O(n^2)
 
     private bool Equals(Board? other)
     {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        return ManhattanDistance == other.ManhattanDistance && _indexOfZero == other._indexOfZero &&
+        return ManhattanDistance == other.ManhattanDistance && 
                _tiles.Equals(other._tiles) && Size == other.Size;
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
-        return Equals((Board)obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(_indexOfZero, _tiles, Size);
     }
 }

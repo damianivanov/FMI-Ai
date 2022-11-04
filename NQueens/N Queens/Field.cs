@@ -1,3 +1,5 @@
+using System.Reflection.Metadata.Ecma335;
+
 class Field
 {
     public int[] queens;
@@ -12,8 +14,8 @@ class Field
         this.n = n;
         this.diagonals = ((2 * n) - 1);
 
-        //InitMinConflict();
-        RandomInit();
+        InitMinConflict();
+        //RandomInit();
     }
 
     public void InitMinConflict()
@@ -22,32 +24,33 @@ class Field
         this.queensPerRow = new int[n];
         this.queensPerMD = new int[diagonals];
         this.queensPerSD = new int[diagonals];
+        
         var list = Enumerable.Range(0, n).ToList();
         var rnd = new Random();
         for (int col = 0; col < n; col++)
         {
             var minConflicts = n;
             int row = -1;
-            for (int j = 0; j < list.Count; j++)
+            for (int j = 0; j < n; j++)
             {
                 int currConflicts = Conflicts(col, list[j]);
                 if (currConflicts < minConflicts)
                 {
                     minConflicts = currConflicts;
                     row = j;
+                    if (minConflicts == 0) break;
                 }
             }
 
             queens[col] = list[row];
             list.RemoveAt(row);
-            int mainIndex = (col - row) + n - 1;
-            int secondIndex = row + col;
+            int mainIndex = MDPos(col, row);
+            int secondIndex = SDPos(col, row);
             queensPerMD[mainIndex]++;
             queensPerSD[secondIndex]++;
             queensPerRow[row]++;
         }
     }
-
     public void RandomInit()
     {
         var list = Enumerable.Range(0, n).ToList();
@@ -91,7 +94,7 @@ class Field
     {
         int maxConflict = 0;
         int indexMaxConflict = -1;
-        for (int i = from; i < n; i++)
+        for (int i = 0; i < n; i++)
         {
             int currConflicts = Conflicts(i);
             if (maxConflict < currConflicts)
@@ -118,6 +121,8 @@ class Field
             {
                 minConflicts = conflicts;
                 rowIndex = i;
+                
+                if (minConflicts == 0) break;
             }
         }
 
@@ -125,26 +130,26 @@ class Field
         UpdateQueenPos(col, rowIndex);
     }
 
-    public int Conflicts(int col, int row)
+    private int Conflicts(int col, int row)
     {
-        int mainIndex = (col - row) + n - 1;
-        int secondIndex = row + col;
-        return queensPerRow[row] + queensPerMD[mainIndex] + queensPerSD[secondIndex];
+        return queensPerRow[row] + queensPerMD[MDPos(col,row)] + queensPerSD[SDPos(col,row)];
     }
 
+    private int MDPos(int col, int row) => (col - row) + n - 1;
+    private int SDPos(int col, int row) => row + col;
     public int Conflicts(int col)
     {
         int row = queens[col];
 
-        int mainIndex = (col - row) + n - 1;
-        int secondIndex = row + col;
+        int mainIndex = MDPos(col,row);
+        int secondIndex = SDPos(col,row);
 
-        // int rows = queensPerRow[row] > 0 ? queensPerRow[row] - 1 : 0;
-        // int d1 = queensPerMD[mainIndex] > 0 ? queensPerMD[mainIndex] - 1 : 0;
-        // int d2 = queensPerSD[secondIndex] > 0 ? queensPerSD[secondIndex] - 1 : 0;
+        int rows = queensPerRow[row] > 0 ? queensPerRow[row] - 1 : 0;
+        int d1 = queensPerMD[mainIndex] > 0 ? queensPerMD[mainIndex] - 1 : 0;
+        int d2 = queensPerSD[secondIndex] > 0 ? queensPerSD[secondIndex] - 1 : 0;
 
-        return queensPerRow[row] - 1 + queensPerMD[mainIndex] - 1 + queensPerSD[secondIndex] - 1;
-        // return rows + d1 + d2;
+        // return queensPerRow[row] - 1 + queensPerMD[mainIndex] - 1 + queensPerSD[secondIndex] - 1;
+        return rows + d1 + d2;
     }
 
 

@@ -1,10 +1,23 @@
 namespace EightPuzzle;
+
+struct Coordinates
+{
+    public Coordinates(sbyte x, sbyte y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public sbyte X { get; set; }
+    public sbyte Y { get; set; }
+    
+}
 class Board
 {
     
     public int[,] _tiles;
 
-    private Tuple<int, int> _currIndexOfZero;
+    private Coordinates _currIndexOfZero;
     public int ManhattanDistance { get; set; }
     public int[,] GoalState { get; private set; }
     public Stack<string> PathString { get; set; } = new Stack<string>();
@@ -13,14 +26,14 @@ class Board
     public int FinalIndexOfZero { get; private set; }
 
     public Board(int boardSize, int[,] board, int indexOfZero = -1, int[,]? goalState = null,
-        Tuple<int, int>? currIndexOfZero = null)
+        Coordinates? currIndexOfZero = null)
     {
         Size = boardSize;
         FinalIndexOfZero = indexOfZero;
         this._tiles = (board.Clone() as int[,])!;
         this.GoalState = goalState;
         if (currIndexOfZero == null) this._currIndexOfZero = FindIndexOfValue(0, this._tiles);
-        else _currIndexOfZero = currIndexOfZero;
+        else _currIndexOfZero = (Coordinates)currIndexOfZero;
         // ManhattanDistance = Manhattan();
     }
 
@@ -56,7 +69,7 @@ class Board
         for (int j = 0; j < Size; j++)
             tiles[index++] = _tiles[i, j];
         // row of 0 + inversion count, ako e cheten size-a 
-        if (Size % 2 == 0) return (InversionCount(tiles) + _currIndexOfZero.Item1) % 2 != 0;
+        if (Size % 2 == 0) return (InversionCount(tiles) + _currIndexOfZero.X) % 2 != 0;
         else return InversionCount(tiles) % 2 == 0;
     }
 
@@ -73,18 +86,18 @@ class Board
             .ToDictionary(b => b.Key, b => b.Value);
     }
 
-    private Board? Move(int tilesX, int tilesY)
+    private Board? Move(sbyte tilesX, sbyte tilesY)
     {
         try
         {
-            if(!InsideMatrix(_currIndexOfZero.Item1+tilesX,_currIndexOfZero.Item2+tilesY)){
+            if(!InsideMatrix(_currIndexOfZero.X+tilesX,_currIndexOfZero.Y+tilesY)){
                 return null;
             }
             var oldZeroIndex = this._currIndexOfZero;
             var board = new Board(Size, _tiles, FinalIndexOfZero, null, this._currIndexOfZero);
-            board.Swap(_currIndexOfZero, _currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
-            board._currIndexOfZero =
-                new Tuple<int, int>(_currIndexOfZero.Item1 + tilesX, _currIndexOfZero.Item2 + tilesY);
+            board.Swap(_currIndexOfZero, _currIndexOfZero.X + tilesX, _currIndexOfZero.Y + tilesY);
+            board._currIndexOfZero.X += tilesX;
+            board._currIndexOfZero.Y += tilesY;
 
             board.ManhattanDistance = this.ManhattanDistance;
             board.ManhattanDistance += board.ModifiedManhatanDistance(oldZeroIndex, board._currIndexOfZero);
@@ -103,18 +116,18 @@ class Board
         return newX >= 0 && newY >= 0 && newX < Size && newY < Size;
     }
 
-    private int ModifiedManhatanDistance(Tuple<int, int> oldZero, Tuple<int, int> newZero)
+    private int ModifiedManhatanDistance(Coordinates oldZero, Coordinates newZero)
     {
-        var goalIndex = FindIndexOfValueGoalState(_tiles[oldZero.Item1, oldZero.Item2]);
-        var oldDistance = Distance(newZero, goalIndex.Item1, goalIndex.Item2);
-        var newDistance = Distance(oldZero, goalIndex.Item1, goalIndex.Item2);
+        var goalIndex = FindIndexOfValueGoalState(_tiles[oldZero.X, oldZero.Y]);
+        var oldDistance = Distance(newZero, goalIndex.X, goalIndex.Y);
+        var newDistance = Distance(oldZero, goalIndex.X, goalIndex.Y);
         return newDistance - oldDistance;
     }
 
-    private void Swap(Tuple<int, int> ind1, int newX, int newY)
+    private void Swap(Coordinates coordinates, int newX, int newY)
     {
-        (_tiles[ind1.Item1, ind1.Item2], _tiles[newX, newY]) =
-            (_tiles[newX, newY], _tiles[ind1.Item1, ind1.Item2]);
+        (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
+            (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
     }
 
     private void Ida_star()
@@ -150,33 +163,23 @@ class Board
 
         return min;
     }
-
-    private bool sameField(int[,] arr1, int[,] arr2)
+    private Coordinates FindIndexOfValue(int value, int[,] board)
     {
-        for (int i = 0; i < arr1.GetLength(0); i++)
-        for (int j = 0; j < arr1.GetLength(0); j++)
-            if (arr1[i, j] != arr2[i, j])
-                return false;
-        return true;
-    }
-
-    private Tuple<int, int> FindIndexOfValue(int value, int[,] board)
-    {
-        for (var i = 0; i < Size; i++)
-        for (var j = 0; j < Size; j++)
+        for (sbyte i = 0; i < Size; i++)
+        for (sbyte j = 0; j < Size; j++)
             if (board[i, j] == value)
-                return Tuple.Create(i, j);
+                return new Coordinates(i,j);
 
-        return Tuple.Create(-1, -1);
+        return new Coordinates(-1,-1);
     } //O(n^2)
 
-    private Tuple<int, int> FindIndexOfValueGoalState(int value)
+    private Coordinates FindIndexOfValueGoalState(int value)
     {
         if (value > FinalIndexOfZero && FinalIndexOfZero != -1)
             value++;
-        int i = Convert.ToInt32((value - 1) / Size);
-        int j = ((value - 1) % Size);
-        return Tuple.Create(i, j);
+        sbyte i = Convert.ToSByte((value - 1) / Size);
+        sbyte j = Convert.ToSByte((value - 1) % Size);
+        return new Coordinates(i,j);
     } // O(1)
 
     private void Manhattan()
@@ -189,7 +192,7 @@ class Board
         this.ManhattanDistance = manhattanDistance;
     } //O(n^2)
 
-    private int Distance(Tuple<int, int> el1, int i, int j) => Math.Abs(el1.Item1 - i) + Math.Abs(el1.Item2 - j);
+    private int Distance(Coordinates el1, int i, int j) => Math.Abs(el1.X - i) + Math.Abs(el1.Y - j);
 
     private bool IsGoal(int[,] goalState)
     {

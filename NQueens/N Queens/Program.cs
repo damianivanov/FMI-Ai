@@ -4,42 +4,42 @@
 int n = int.Parse(Console.ReadLine()!);
 //var arr = Console.ReadLine()!.Split().Select(int.Parse).ToArray();
 var watch = Stopwatch.StartNew();
-Solve2(n);
+SolveMinConflicts(n);
 watch.Stop();
 Console.WriteLine($"{watch.Elapsed:ss\\:fff} seconds");
 
-// void Solve(int n)
-// {
-//     const int k = 3;
-//     var field = new Field(n);
-//     while (true)
-//     {
-//         // field.InitMinConflict();
-//         for (int j = 0; j < k; j++)
-//         {
-//             for (int i = 0; i < n; i++)
-//             {
-//                 var col = field.GetColWithQueenWithMaxConf(i);
-//                 if (col == -1)
-//                 {
-//                     if (field.IsSolved())
-//                     {
-//                         field.Print();
-//                         return;
-//                     }
-//
-//                     break;
-//                 }
-//
-//                 field.GetRowWithMinConflict(col);
-//             }
-//         }
-//
-//         field.RandomInit();
-//     }
-// }
+void SolveMinConflicts(int n)
+{
+    const int k = 3;
+    var field = new Field(n);
+    while (true)
+    { 
+        for (int j = 0; j < k; j++)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                var col = field.GetColWithQueenWithMaxConf(i);
+                if (col == -1)
+                {
+                    if (field.IsSolved())
+                    {
+                        field.Print();
+                        return;
+                    }
 
-void Solve2(int n)
+                    break;
+                }
+
+                field.GetRowWithMinConflict(col);
+            }
+        }
+
+        Console.WriteLine("New Board");
+        field.RandomInit();
+    }
+}
+
+void SolveSwaps(int n)
 {
     //Algoritamut e po psevdokod ot statiq na
     //Rok Sosic and Jun Gu Department of Computer Science 2 University of Utah 

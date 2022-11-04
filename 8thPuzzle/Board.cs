@@ -1,5 +1,4 @@
-using System.Text;
-
+namespace EightPuzzle;
 class Board
 {
     
@@ -7,7 +6,7 @@ class Board
 
     private Tuple<int, int> _currIndexOfZero;
     public int ManhattanDistance { get; set; }
-    public int[,] _goalState { get; private set; }
+    public int[,] GoalState { get; private set; }
     public Stack<string> PathString { get; set; } = new Stack<string>();
     public Stack<Board> Path { get; set; } = new Stack<Board>();
     public int Size { get; }
@@ -19,7 +18,7 @@ class Board
         Size = boardSize;
         FinalIndexOfZero = indexOfZero;
         this._tiles = (board.Clone() as int[,])!;
-        this._goalState = goalState;
+        this.GoalState = goalState;
         if (currIndexOfZero == null) this._currIndexOfZero = FindIndexOfValue(0, this._tiles);
         else _currIndexOfZero = currIndexOfZero;
         // ManhattanDistance = Manhattan();
@@ -135,16 +134,11 @@ class Board
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
         if (f > bound) return f;
-        if (currNode.ManhattanDistance==0 && currNode.IsGoal(this._goalState)) return 0;
+        if (currNode.ManhattanDistance==0 && currNode.IsGoal(this.GoalState)) return 0;
         int min = int.MaxValue;
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            if (path.Contains(node.Value!))
-            {
-                continue;
-            }
-
             PathString.Push(node.Key);
             path.Push(node.Value!);
             int t = Search(path, currentCost+1, bound);

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using EightPuzzle;
 
 //------------ INPUT -----------------------
 var tiles = int.Parse(Console.ReadLine()!);
@@ -18,7 +19,7 @@ if (indexOfZero == -1) goalState[boardSize - 1, boardSize - 1] = 0;
 
 for (int i = 0; i < boardSize; i++)
 {
-    var row = Console.ReadLine()!.Trim().Split().Select(int.Parse).ToArray();
+    var row = Console.ReadLine()!.Trim().Split().Select(sbyte.Parse).ToArray();
     for (int j = 0; j < boardSize; j++)
     {
         boardInput[i, j] = row[j];
@@ -31,8 +32,8 @@ Console.WriteLine("--------Start--------");
 var watch = Stopwatch.StartNew();
 board.Solve();
 watch.Stop();
-Console.WriteLine(watch.Elapsed.ToString(@"ss\:fff"));
 PrintSolution(board);
+Console.WriteLine(watch.Elapsed.ToString(@"ss\:fff"));
 
 
 string PrintField(int[,] array)
@@ -58,8 +59,8 @@ void PrintSolution(Board board)
 {
     List<string> finalPath = board.PathString.ToList();
     finalPath.Reverse();
-    Console.WriteLine(finalPath.Count);
     Console.WriteLine(string.Join(Environment.NewLine, finalPath));
+    Console.WriteLine(finalPath.Count);
 }
 /*
 8
@@ -168,7 +169,7 @@ U L D D R U U R D L L D R R U U L D L U - 00:263
 10 3 6 7
 13 1 9 15
 8 11 12 14 
-36 Moves //03:41
+37 Moves //03:29
 
 15
 -1

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace EightPuzzle;
 
 struct Coordinates
@@ -60,7 +62,6 @@ class Board
 
         return inversions;
     } // O(n^2)
-
     private bool IsSolvable()
     {
         int[] tiles = new int[Size * Size];
@@ -90,9 +91,7 @@ class Board
     {
         try
         {
-            if(!InsideMatrix(_currIndexOfZero.X+tilesX,_currIndexOfZero.Y+tilesY)){
-                return null;
-            }
+            if(!InsideMatrix(_currIndexOfZero.X+tilesX,_currIndexOfZero.Y+tilesY)) return null;
             var oldZeroIndex = this._currIndexOfZero;
             var board = new Board(Size, _tiles, FinalIndexOfZero, null, this._currIndexOfZero);
             board.Swap(_currIndexOfZero, _currIndexOfZero.X + tilesX, _currIndexOfZero.Y + tilesY);
@@ -133,16 +132,18 @@ class Board
     private void Ida_star()
     {
         int bound = ManhattanDistance;
+        var visited = new List<string>();
         Path.Push(this);
+        visited.Add(this.ToString());
         while (Path.Count > 0)
         {
-            int t = Search(Path, 0, bound);
+            int t = Search(Path, 0, bound,visited);
             if (t == 0) return;
             bound = t;
         }
     }
 
-    private int Search(Stack<Board> path, int currentCost, int bound)
+    private int Search(Stack<Board> path, int currentCost, int bound,List<string>visited)
     {
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
@@ -152,13 +153,17 @@ class Board
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
+            var str = node.Value.ToString();
+            if(visited.Contains(str)) continue;
             PathString.Push(node.Key);
             path.Push(node.Value!);
-            int t = Search(path, currentCost+1, bound);
+            visited.Add(str);
+            int t = Search(path, currentCost+1, bound,visited);
             if (t == 0) return 0;
             if (t <= min) min = t;
             PathString.Pop();
             path.Pop();
+            visited.RemoveAt(visited.Count-1);
         }
 
         return min;
@@ -226,10 +231,19 @@ class Board
 
     
 
-    // public override string ToString()
-    // {
-    //     return PrintField(_tiles);
-    // } //O(n^2)
+    public override string ToString()
+    {
+        string str = "";
+        for (int i = 0; i <Size; i++)
+        {
+            for (int j = 0; j < Size; j++)
+            {
+                str += $"{_tiles[i, j]}";
+            }
+        }
+
+        return str;
+    } 
 
     private bool Equals(Board? other)
     {

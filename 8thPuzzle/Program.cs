@@ -57,10 +57,9 @@ string PrintField(int[,] array)
 }
 void PrintSolution(Board board)
 {
-    List<string> finalPath = board.PathString.ToList();
-    finalPath.Reverse();
-    Console.WriteLine(string.Join(Environment.NewLine, finalPath));
-    Console.WriteLine(finalPath.Count);
+    // List<string> finalPath = board.PathString.ToList();
+    Console.WriteLine(string.Join(Environment.NewLine, board.PathString));
+    Console.WriteLine(board.PathString.Count);
 }
 /*
 ---HARDEST POSSIBLE---
@@ -154,7 +153,7 @@ U L D D R U U R D L L D R R U U L D L U - 00:013
 8 7 0
 6 3 2
 5 4 1
-08:364 // 00:743 //00:066
+08:364 // 00:743(insideTheMatrix method) //00:066(Linq) // 00:53
 
 15
 -1
@@ -162,7 +161,7 @@ U L D D R U U R D L L D R R U U L D L U - 00:013
 10 3 6 7
 13 1 9 15
 8 11 12 14 
-37 Moves //03:29//00:394
+37 Moves //03:29//00:394// 00:301 // 00:122
 
 15
 -1
@@ -178,7 +177,7 @@ U L D D R U U R D L L D R R U U L D L U - 00:013
 8 0 1 15
 10 7 2 11
 12 9 14 13
-40 Moves //02:052
+40 Moves //02:052 // 01:316(removing Linq) //00:754 (stringBuilder in ToString)
 
 ---UNSOLVABLE---
 8

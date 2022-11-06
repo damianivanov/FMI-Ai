@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace EightPuzzle;
 
@@ -74,15 +75,14 @@ class Board
     }
     private Dictionary<string, Board?> Neighbors()
     {
-        return new Dictionary<string, Board?>()
-            {
-                { "Up", Up() },
-                { "Down", Down() },
-                { "Left", Left() },
-                { "Right", Right() }
-            }.Where(b => b.Value != null)
-            .OrderBy(b => b.Value!.ManhattanDistance)
-            .ToDictionary(b => b.Key, b => b.Value);
+        var dict = new Dictionary<string, Board?>
+        {
+            ["Up"] = Up(),
+            ["Down"] = Down(),
+            ["Left"] = Left(),
+            ["Right"] = Right()
+        };
+        return dict;
     }
     private Board? Move(sbyte tilesX, sbyte tilesY)
     {
@@ -121,19 +121,17 @@ class Board
 
     private void Swap(Coordinates coordinates, int newX, int newY)
     {
-        //var v = _tiles[coordinates.X, coordinates.Y];
-        //_tiles[coordinates.X, coordinates.Y] = _tiles[newX, newY];
-        //_tiles[newX,newY]=v; 
-        (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
-            (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
+        (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) = (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
+        // (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
+        //     (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
     }
 
     private void Ida_star()
     {
         int bound = ManhattanDistance;
-        var visited = new List<string>();
+        var visited = new Stack<string>();
         Path.Push(this);
-        visited.Add(this.ToString());
+        visited.Push(this.ToString());
         while (Path.Count > 0)
         {
             int t = Search(Path, 0, bound, visited);
@@ -142,7 +140,7 @@ class Board
         }
     }
 
-    private int Search(Stack<Board> path, int currentCost, int bound, List<string> visited)
+    private int Search(Stack<Board> path, int currentCost, int bound, Stack<string> visited)
     {
         var currNode = path.Peek();
         int f = currentCost + currNode.ManhattanDistance;
@@ -152,11 +150,12 @@ class Board
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
+            if(node.Value is null ) continue;
             var str = node.Value!.ToString();
             if (visited.Contains(str)) continue;
             PathString.Add(node.Key);
             path.Push(node.Value!);
-            visited.Add(str);
+            visited.Push(str);
 
             int t = Search(path, currentCost + 1, bound, visited);
             if (t == 0) return 0;
@@ -164,7 +163,7 @@ class Board
 
             PathString.RemoveAt(PathString.Count - 1);
             path.Pop();
-            visited.RemoveAt(visited.Count - 1);
+            visited.Pop();
         }
 
         return min;
@@ -239,15 +238,15 @@ class Board
 
     public override string ToString()
     {
-        string str = "";
+        StringBuilder str = new StringBuilder();
         for (int i = 0; i < Size; i++)
         {
             for (int j = 0; j < Size; j++)
             {
-                str += $"{_tiles[i, j]}";
+                str.Append(_tiles[i, j]);
             }
         }
 
-        return str;
+        return str.ToString();
     }
 }

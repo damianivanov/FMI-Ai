@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 
 namespace EightPuzzle;
@@ -13,11 +12,10 @@ struct Coordinates
 
     public sbyte X { get; set; }
     public sbyte Y { get; set; }
-
 }
+
 class Board
 {
-
     public int[,] _tiles;
 
     private Coordinates _currIndexOfZero;
@@ -42,13 +40,14 @@ class Board
 
     public void Solve()
     {
-        if (!IsSolvable()) Console.WriteLine("Not Solvable");
+        if (FinalIndexOfZero == -1 && !IsSolvable()) Console.WriteLine("Not Solvable");
         else
         {
             Manhattan();
             Ida_star();
         }
     }
+
     private int InversionCount(int[] numbers)
     {
         int inversions = 0;
@@ -62,17 +61,19 @@ class Board
 
         return inversions;
     } // O(n^2)
+
     private bool IsSolvable()
     {
         int[] tiles = new int[Size * Size];
         int index = 0;
         for (int i = 0; i < Size; i++)
-            for (int j = 0; j < Size; j++)
-                tiles[index++] = _tiles[i, j];
+        for (int j = 0; j < Size; j++)
+            tiles[index++] = _tiles[i, j];
         // row of 0 + inversion count, ako e cheten size-a 
         if (Size % 2 == 0) return (InversionCount(tiles) + _currIndexOfZero.X) % 2 != 0;
         else return InversionCount(tiles) % 2 == 0;
     }
+
     private Dictionary<string, Board?> Neighbors()
     {
         var dict = new Dictionary<string, Board?>
@@ -84,11 +85,11 @@ class Board
         };
         return dict;
     }
+
     private Board? Move(sbyte tilesX, sbyte tilesY)
     {
         try
         {
-
             var newX = _currIndexOfZero.X + tilesX;
             var newY = _currIndexOfZero.Y + tilesY;
 
@@ -118,10 +119,10 @@ class Board
     }
 
 
-
     private void Swap(Coordinates coordinates, int newX, int newY)
     {
-        (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) = (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
+        (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
+            (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
         // (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
         //     (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
     }
@@ -150,7 +151,7 @@ class Board
         var neighbors = currNode.Neighbors();
         foreach (var node in neighbors)
         {
-            if(node.Value is null ) continue;
+            if (node.Value is null) continue;
             var str = node.Value!.ToString();
             if (visited.Contains(str)) continue;
             PathString.Add(node.Key);
@@ -168,12 +169,13 @@ class Board
 
         return min;
     }
+
     private Coordinates FindIndexOfValue(int value, int[,] board)
     {
         for (sbyte i = 0; i < Size; i++)
-            for (sbyte j = 0; j < Size; j++)
-                if (board[i, j] == value)
-                    return new Coordinates(i, j);
+        for (sbyte j = 0; j < Size; j++)
+            if (board[i, j] == value)
+                return new Coordinates(i, j);
 
         return new Coordinates(-1, -1);
     } //O(n^2)
@@ -191,9 +193,9 @@ class Board
     {
         int manhattanDistance = 0;
         for (var i = 0; i < Size; i++)
-            for (var j = 0; j < Size; j++)
-                if (_tiles[i, j] != 0)
-                    manhattanDistance += Distance(FindIndexOfValueGoalState(_tiles[i, j]), i, j);
+        for (var j = 0; j < Size; j++)
+            if (_tiles[i, j] != 0)
+                manhattanDistance += Distance(FindIndexOfValueGoalState(_tiles[i, j]), i, j);
         this.ManhattanDistance = manhattanDistance;
     } //O(n^2)
 
@@ -203,16 +205,19 @@ class Board
         var oldDistance = Distance(newZero, goalIndex.X, goalIndex.Y);
         var newDistance = Distance(oldZero, goalIndex.X, goalIndex.Y);
         return newDistance - oldDistance;
-    }//O(1)
+    } //O(1)
 
-    private int Distance(Coordinates el1, int i, int j) { return Math.Abs(el1.X - i) + Math.Abs(el1.Y - j); }
+    private int Distance(Coordinates el1, int i, int j)
+    {
+        return Math.Abs(el1.X - i) + Math.Abs(el1.Y - j);
+    }
 
     private bool IsGoal(int[,] goalState)
     {
         for (var i = 0; i < Size; i++)
-            for (int j = 0; j < Size; j++)
-                if (this._tiles[i, j] != goalState[i, j])
-                    return false;
+        for (int j = 0; j < Size; j++)
+            if (this._tiles[i, j] != goalState[i, j])
+                return false;
         return true;
     }
 

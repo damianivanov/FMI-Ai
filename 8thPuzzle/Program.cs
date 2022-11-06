@@ -11,8 +11,8 @@ var goalState = new int[boardSize, boardSize];
 //GOAL State
 var counter = 1;
 for (var i = 0; i < boardSize; i++)
-    for (var j = 0; j < boardSize; j++)
-        goalState[i, j] = (i * boardSize + j == indexOfZero) ? 0 : counter++;
+for (var j = 0; j < boardSize; j++)
+    goalState[i, j] = (i * boardSize + j == indexOfZero) ? 0 : counter++;
 
 if (indexOfZero == -1) goalState[boardSize - 1, boardSize - 1] = 0;
 //
@@ -55,9 +55,9 @@ string PrintField(int[,] array)
 
     return str.ToString();
 }
+
 void PrintSolution(Board board)
 {
-    // List<string> finalPath = board.PathString.ToList();
     Console.WriteLine(string.Join(Environment.NewLine, board.PathString));
     Console.WriteLine(board.PathString.Count);
 }
@@ -96,7 +96,7 @@ L U R R D D L U R U L D L U - 0:015
 3 1 0
 4 5 2
 6 7 8
-U R R D - 00:02
+U R R D - 00:004
 
 8
 -1

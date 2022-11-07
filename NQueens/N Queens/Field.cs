@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 class Field
 {
     public int[] queens;
@@ -10,21 +12,19 @@ class Field
     public Field(int n)
     {
         this.n = n;
-        this.diagonals = ((2 * n) - 1);
-
+        this.diagonals = ((2 * n) - 1); 
+        this.queens = new int[n];
+        this.queensPerRow = new int[n];
+        this.queensPerMD = new int[diagonals];
+        this.queensPerSD = new int[diagonals];
         //InitMinConflict();
-         RandomInit();
+        RandomInit();
     }
 
  
     public void InitMinConflict()
     {
-        this.queens = new int[n];
-        this.queensPerRow = new int[n];
-        this.queensPerMD = new int[diagonals];
-        this.queensPerSD = new int[diagonals];
-
-        var list = randomArray().ToList();
+        var list = RandomArray().ToList();
         for (int col = 0; col < n; col++)
         {
             var minConflicts = n;
@@ -39,17 +39,13 @@ class Field
                     if (minConflicts == 0) break;
                 }
             }
-            var item = list[row];
-            queens[col] = item;
+
+            var newRow = list[row];
             list.RemoveAt(row);
-            int mainIndex = (col - item) + n - 1;
-            int secondIndex = item + col;
-            queensPerMD[mainIndex]++;
-            queensPerSD[secondIndex]++;
-            queensPerRow[item]++;
+            UpdateQueenPos(col,newRow);
         }
     }
-    private int[] randomArray()
+    private int[] RandomArray()
     {
         var list = Enumerable.Range(0, n).ToArray();
         var rnd = new Random();
@@ -60,20 +56,16 @@ class Field
             var k = rnd.Next(copyOfn + 1);
             (list[k], list[copyOfn]) = (list[copyOfn], list[k]);
         }
-        return list; ;
+        return list;
     }
     public void RandomInit()
     {
-        queens = randomArray();
+        queens = RandomArray();
         CalculateDiagonals();
     }
 
-    public void CalculateDiagonals()
+    private void CalculateDiagonals()
     {
-        this.queensPerRow = Enumerable.Repeat(1, n).ToArray();
-        this.queensPerMD = new int[diagonals];
-        this.queensPerSD = new int[diagonals];
-
         for (int i = 0; i < n; i++)
         {
             var row = queens[i];
@@ -81,6 +73,7 @@ class Field
             int secondIndex = row + i;
             queensPerMD[mainIndex]++;
             queensPerSD[secondIndex]++;
+            queensPerRow[row]++;
         }
     }
 
@@ -113,7 +106,7 @@ class Field
         int minConflicts = n;
         int rowIndex = n - 1;
         int oldRowIndex = queens[col];
-        RemoveQueenAtPos(col);
+        RemoveQueenAtPos(col,oldRowIndex);
         for (int i = 0; i < n; i++)
         {
             if (i == oldRowIndex) continue;
@@ -128,37 +121,41 @@ class Field
         queens[col] = rowIndex;
         UpdateQueenPos(col, rowIndex);
     }
-
-    public int Conflicts(int col, int row)
+    
+    /// <summary>
+    /// Number of Conflicts before putting a Queen on the tile
+    /// </summary>
+    /// <param name="col"></param>
+    /// <param name="row"></param>
+    /// <returns></returns>
+    private int Conflicts(int col, int row)
     {
         int mainIndex = (col - row) + n - 1;
         int secondIndex = row + col;
         return queensPerRow[row] + queensPerMD[mainIndex] + queensPerSD[secondIndex];
     }
 
+    /// <summary>
+    /// Number of Conflicts with Queen on the tile
+    /// </summary>
+    /// <param name="col"></param>
+    /// <returns></returns>
     public int Conflicts(int col)
     {
         int row = queens[col];
 
         int mainIndex = (col - row) + n - 1;
         int secondIndex = row + col;
-
-        // int rows = queensPerRow[row] > 0 ? queensPerRow[row] - 1 : 0;
-        // int d1 = queensPerMD[mainIndex] > 0 ? queensPerMD[mainIndex] - 1 : 0;
-        // int d2 = queensPerSD[secondIndex] > 0 ? queensPerSD[secondIndex] - 1 : 0;
-
         return queensPerRow[row] - 1 + queensPerMD[mainIndex] - 1 + queensPerSD[secondIndex] - 1;
-        // return rows + d1 + d2;
     }
-
-
+    
     public bool SwapReducesConflicts(int sumConflicts, int col1, int col2)
     {
         int row1 = queens[col1];
         int row2 = queens[col2];
 
-        RemoveQueenAtPos(col1);
-        RemoveQueenAtPos(col2);
+        RemoveQueenAtPos(col1,row1);
+        RemoveQueenAtPos(col2,row2);
 
         int sum = Conflicts(col1, row2) + Conflicts(col2, row1);
         if (sum < sumConflicts)
@@ -173,9 +170,8 @@ class Field
         return false;
     }
 
-    private void RemoveQueenAtPos(int col)
+    private void RemoveQueenAtPos(int col,int row)
     {
-        int row = queens[col];
         int mainIndex = (col - row) + n - 1;
         int secondIndex = row + col;
 

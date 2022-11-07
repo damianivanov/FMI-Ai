@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-// 0 3 1 2
+
 int n = int.Parse(Console.ReadLine()!);
 //var arr = Console.ReadLine()!.Split().Select(int.Parse).ToArray();
 var watch = Stopwatch.StartNew();
@@ -12,7 +12,6 @@ void SolveMinConflicts(int n)
 {
     const int k = 4;
     var field = new Field(n);
-    int counter = 0;
     while (true)
     {
         for (int j = 0; j < k; j++)
@@ -20,29 +19,27 @@ void SolveMinConflicts(int n)
             for (int i = 0; i < n; i++)
             {
                 var col = field.GetColWithQueenWithMaxConf(i);
-                if (col==-1)
+                if (col == -1)
                 {
                     if (field.IsSolved())
                     {
-                        
                         field.Print();
                         return;
                     }
+
                     break;
                 }
+
                 field.GetRowWithMinConflict(col);
             }
         }
-        field.RandomInit();
-       // Console.WriteLine(counter++);
+
+        field.InitMinConflict();
     }
 }
 
 void SolveSwaps(int n)
 {
-    //Algoritamut e po psevdokod ot statiq na
-    //Rok Sosic and Jun Gu Department of Computer Science 2 University of Utah 
-
     var field = new Field(n);
     while (true)
     {
@@ -69,10 +66,8 @@ void SolveSwaps(int n)
                 field.Print();
                 return;
             }
-            else
-            {
-                field.RandomInit();
-            }
+            field.RandomInit();
         }
+
     }
 }

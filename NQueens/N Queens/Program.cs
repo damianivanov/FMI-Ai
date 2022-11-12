@@ -14,38 +14,42 @@ for (int i = 0; i < 10; i++)
 
 void SolveSwaps(int n)
 {
-    var field = new Field(n);
-    for (int p = 0; p < 3; p++)
+    while (true)
     {
-        int swaps = 0;
-        for (int i = 0; i < n; i++)
+        var field = new Field(n);
+        for (int p = 0; p < 3; p++)
         {
-            var queenIConflicts = field.Conflicts(i);
-            if (queenIConflicts == 0) continue;
-            for (int j = i + 1; j < n; j++)
+            int swaps = 0;
+            for (int i = 0; i < n; i++)
             {
-                var queenJConflicts = field.Conflicts(j);
-                int sumConflicts = queenIConflicts + queenJConflicts;
-                if (sumConflicts > 0)
+                var queenIConflicts = field.Conflicts(i);
+                if (queenIConflicts == 0) continue;
+                for (int j = i + 1; j < n; j++)
                 {
-                    if (field.SwapReducesConflicts(sumConflicts, i, j))
+                    var queenJConflicts = field.Conflicts(j);
+                    int sumConflicts = queenIConflicts + queenJConflicts;
+                    if (sumConflicts > 0)
                     {
-                        swaps++;
-                        queenIConflicts = field.Conflicts(i);
-                        if (queenIConflicts == 0) break;
+                        if (field.SwapReducesConflicts(sumConflicts, i, j))
+                        {
+                            swaps++;
+                            queenIConflicts = field.Conflicts(i);
+                            if (queenIConflicts == 0) break;
+                        }
                     }
                 }
             }
+
+            if (swaps != 0) continue;
+            if (field.IsSolved())
+            {
+                field.Print();
+                return;
+            }
         }
 
-        if (swaps != 0) continue;
-        if (field.IsSolved())
-        {
-            // field.Print();
-            return;
-        }
+        field.RandomInit();
     }
-    // field.RandomInit();
 }
 
 void SolveMinConflicts(int n)

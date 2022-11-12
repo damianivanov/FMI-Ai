@@ -12,9 +12,9 @@ class Field
     public Field(int n)
     {
         this.n = n;
-        diagonals = ((2 * n) - 1); 
+        diagonals = ((2 * n) - 1);
         queens = new int[n];
-        
+
         queensPerRow = new int[n];
         queensPerMD = new int[diagonals];
         queensPerSD = new int[diagonals];
@@ -22,7 +22,7 @@ class Field
         RandomInit();
     }
 
- 
+
     public void InitMinConflict()
     {
         CleanArrays();
@@ -41,12 +41,13 @@ class Field
                     if (minConflicts == 0) break;
                 }
             }
-            
+
             var newRow = list[row];
             list.RemoveAt(row);
-            UpdateQueenPos(col,newRow);
+            UpdateQueenPos(col, newRow);
         }
     }
+
     private int[] RandomArray()
     {
         var list = Enumerable.Range(0, n).ToArray();
@@ -58,19 +59,23 @@ class Field
             var k = rnd.Next(copyOfn + 1);
             (list[k], list[copyOfn]) = (list[copyOfn], list[k]);
         }
+
         return list;
     }
+
     public void RandomInit()
     {
         queens = RandomArray();
         CalculateDiagonals();
     }
+
     private void CleanArrays()
     {
         Array.Clear(queensPerRow);
         Array.Clear(queensPerMD);
         Array.Clear(queensPerSD);
     }
+
     private void CalculateDiagonals()
     {
         CleanArrays();
@@ -84,23 +89,24 @@ class Field
             queensPerRow[row]++;
         }
     }
+
     public bool IsSolved()
     {
         return queensPerRow.All(i => i < 2) &&
                queensPerMD.All(i => i < 2) &&
                queensPerSD.All(i => i < 2);
     }
-    
+
     public int GetColWithQueenWithMaxConf(int from = 0)
     {
         List<int> indexes = new List<int>();
         int maxConflict = 0;
         int indexMaxConflict = -1;
         indexes.Add(-1);
-        for (int i = from ; i < n; i++)
+        for (int i = from; i < n; i++)
         {
             int currConflicts = Conflicts(i);
-            if(currConflicts == maxConflict) indexes.Add(i);
+            if (currConflicts == maxConflict) indexes.Add(i);
             if (maxConflict < currConflicts)
             {
                 maxConflict = currConflicts;
@@ -112,14 +118,15 @@ class Field
         var randomIndex = Random.Shared.Next(0, indexes.Count);
         var index = indexes[randomIndex];
         indexes.Clear();
-        return index ;
+        return index;
     }
+
     public void GetRowWithMinConflict(int col)
     {
         int minConflicts = Int32.MaxValue;
         int oldRowIndex = queens[col];
         var indexes = new List<int>();
-        RemoveQueenAtPos(col,oldRowIndex);
+        RemoveQueenAtPos(col, oldRowIndex);
         for (int i = 0; i < n; i++)
         {
             if (i == oldRowIndex) continue;
@@ -132,12 +139,13 @@ class Field
                 indexes.Add(i);
             }
         }
-        int rowIndex = indexes[Random.Shared.Next(0,indexes.Count)];
+
+        int rowIndex = indexes[Random.Shared.Next(0, indexes.Count)];
         queens[col] = rowIndex;
         indexes.Clear();
         UpdateQueenPos(col, rowIndex);
     }
-    
+
     /// <summary>
     /// Number of Conflicts before putting a Queen on the tile
     /// </summary>
@@ -164,15 +172,14 @@ class Field
         int secondIndex = row + col;
         return queensPerRow[row] - 1 + queensPerMD[mainIndex] - 1 + queensPerSD[secondIndex] - 1;
     }
-    
+
     public bool SwapReducesConflicts(int sumConflicts, int col1, int col2)
     {
-        
         int row1 = queens[col1];
         int row2 = queens[col2];
 
-        RemoveQueenAtPos(col1,row1);
-        RemoveQueenAtPos(col2,row2);
+        RemoveQueenAtPos(col1, row1);
+        RemoveQueenAtPos(col2, row2);
 
         int sum = Conflicts(col1, row2) + Conflicts(col2, row1);
         if (sum < sumConflicts)
@@ -187,7 +194,7 @@ class Field
         return false;
     }
 
-    private void RemoveQueenAtPos(int col,int row)
+    private void RemoveQueenAtPos(int col, int row)
     {
         int mainIndex = (col - row) + n - 1;
         int secondIndex = row + col;

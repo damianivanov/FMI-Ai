@@ -1,112 +1,134 @@
-using System.Reflection.PortableExecutable;
-using System.Security;
+using Microsoft.VisualBasic;
 
 class Solver
 {
     private int capacityOfBag;
     private int numberOfItems;
-    private Dictionary<int, int> items; //0-weight, 1-value
-    private Tuple<int, char[]> elite;
-    private List<char[]> population = new List<char[]>();
+    private List<KeyValuePair<int, int>> items; //0-weight, 1-value
+    private Chromosome elite;
+    private List<Chromosome> population = new List<Chromosome>();
     private List<int> fitnesses;
-    private List<char[]> children;
-    private List<char[]> parents;
-    private List<int> previousElites = new List<int>();
+    private List<Chromosome> children;
+    private List<Chromosome> parents;
     private const double mutationRate = 0.01;
+    private int generationSize;
+    private int crossoverSize;
+    private int generationsWithoutChangeInElite = 0;
 
-    public Solver(int capacityOfBag, int numberOfItems, Dictionary<int, int> items)
+    public Solver(int capacityOfBag, int numberOfItems, List<KeyValuePair<int, int>> items)
     {
+        this.elite = new Chromosome(null, -1, -1);
         this.items = items;
         this.capacityOfBag = capacityOfBag;
         this.numberOfItems = numberOfItems;
+        this.generationSize = items.Count < 8 ? (int)Math.Pow(2, items.Count) : 100;
+        this.crossoverSize = (int)(Math.Round((double)(generationSize / 4), MidpointRounding.AwayFromZero) * 2);
     }
 
-    private List<char[]> GeneratePopulation(int sizeOfPopulation)
+    public void Solve()
     {
-        var generatePopulation = new List<char[]>();
-        for (int i = 0; i < sizeOfPopulation; i++)
+        const int generationsLimit = 10000;
+        population = GeneratePopulation(generationSize);
+        for (int j = 1; j <= generationsLimit; j++)
         {
-            var child = new char[numberOfItems];
-            for (int j = 0; j < numberOfItems; j++)
+            Selection();
+            Crossover();
+            Mutation();
+            EvaluateChildren();
+            if (generationsWithoutChangeInElite >= generationsLimit * 0.1 && elite.fitness != 0)
             {
-                child[j] = (char)(Random.Shared.Next(2) + '0');
+                PrintElite(j);
+                break;
             }
 
-            generatePopulation.Add(child);
+            population.AddRange(children);
+            population.Add(elite);
+            population = population
+                .OrderByDescending(x => x.fitness)
+                .ThenBy(x => x.weight)
+                .DistinctBy(x => string.Join(',', x.chromosome))
+                .Take(generationSize)
+                .ToList();
+            if (j is 10 or 100 or 300 or 500 or generationsLimit)
+            {
+                PrintElite(j);
+            }
+        }
+    }
+
+    private void EvaluateChildren()
+    {
+        foreach (var child in children)
+        {
+            var result = Fitness(child.chromosome);
+            child.fitness = result.fitness;
+            child.weight = result.weight;
+        }
+    }
+
+    private List<Chromosome> GeneratePopulation(int sizeOfPopulation)
+    {
+        var generatePopulation = new List<Chromosome>();
+        for (int i = 0; i < sizeOfPopulation; i++)
+        {
+            var child = GenerateChromosome();
+            var currentFitness = Fitness(child);
+            var newChromosome = new Chromosome(child, currentFitness.fitness, currentFitness.weight);
+            generatePopulation.Add(newChromosome);
         }
 
         return generatePopulation;
     }
 
-    public void Solve()
+    private char[] GenerateChromosome()
     {
-        const int generationSize = 500;
-        const int generationsLimit = 10000;
-        population.AddRange(GeneratePopulation(generationSize));
-        for (int j = 0; j < generationsLimit; j++)
+        var child = new char[numberOfItems];
+        for (int j = 0; j < numberOfItems; j++)
         {
-            Selection();
-            children = new List<char[]>();
-            for (int i = 0; i < parents.Count; i += 2)
-            {
-                Crossover(parents[i], parents[i + 1]);
-            }
-
-            Mutation();
-            var oldPopulationSize = population.Count - children.Count - 1;
-            if (j % 10 == 0) {oldPopulationSize -= 10;}
-            population = population.Except(parents).Take(oldPopulationSize).ToList();
-            population.Add(elite.Item2);
-            population = population.Concat(children).ToList();
-            if(j%10 ==0){population.AddRange(GeneratePopulation(generationSize-population.Count));}
-            if (j % 10 == 0)
-                Console.WriteLine($"Best Solution After {j} Generations - {GetWeight(elite.Item2)} {elite.Item1}");
+            child[j] = (char)(Random.Shared.Next(2) + '0');
         }
-        Console.WriteLine($"Best Solution After {generationsLimit} Generations - {GetWeight(elite.Item2)} {elite.Item1}");
+
+        return child;
     }
 
-    private int Fitness(char[] child)
+    private (int weight, int fitness) Fitness(char[] child)
     {
         int weight = 0;
         int fitness = 0;
         int i = 0;
 
-        foreach (var key in items.Keys)
+        foreach (var item in items)
         {
             if (child[i] == '1')
             {
-                weight += key;
-                fitness += items[key];
+                weight += item.Key;
+                fitness += item.Value;
             }
 
             i++;
         }
 
-        return weight > capacityOfBag ? 0 : fitness;
+        return (weight, weight > capacityOfBag ? 0 : fitness);
     }
 
     private void Selection()
     {
-        //----Calculate fitness for every chromosome 
         this.fitnesses = new List<int>();
         double sum = 0;
-        var eliteFitness = -1;
-        char[] eliteChromosome = null;
         foreach (var child in population)
         {
-            int currFitness = Fitness(child);
-            if (currFitness > eliteFitness)
+            if (child.fitness > elite.fitness || (child.fitness == elite.fitness && elite.weight > child.weight))
             {
-                eliteFitness = currFitness;
-                eliteChromosome = child;
+                elite = child;
+                generationsWithoutChangeInElite = 0;
             }
 
-            fitnesses.Add(currFitness);
-            sum += currFitness;
+            fitnesses.Add(child.fitness);
+            sum += child.fitness;
         }
 
-        elite = new Tuple<int, char[]>(eliteFitness, eliteChromosome!);
-        previousElites.Add(eliteFitness);
+        generationsWithoutChangeInElite++;
+
         // --- Probability to get picked 
         double[] probArr = new double[fitnesses.Count];
         for (int i = 0; i < fitnesses.Count; i++)
@@ -115,109 +137,157 @@ class Solver
         }
 
         double sumProb = probArr.Sum();
-        List<char[]> selected = new List<char[]>();
-        double crossoverSize = Math.Round((double)(population.Count / 4), MidpointRounding.AwayFromZero) * 2;
+        var selected = new List<Chromosome>();
 
         for (int i = 0; i < crossoverSize; i++)
         {
             selected.Add(BiasedRouletteWheel(probArr, sumProb));
         }
 
-        // var sizeFromOldPopulation = (int)(population.Count / 2) - 1;
-        // population = Shuffle(population).Take(sizeFromOldPopulation).ToList();
         parents = selected;
     }
 
-    private char[] BiasedRouletteWheel(double[] probArr, double sumProb)
+    private Chromosome BiasedRouletteWheel(double[] probArr, double sumProb)
     {
-        double sum = 0;
-        for (int i = 0; i < population.Count; i++)
+        if (double.IsNaN(sumProb))
         {
-            // double percentage = (probArr[i]) * 100;
-            double randomNumber = Random.Shared.NextDouble() * sumProb;
-            if (randomNumber <= (sum += probArr[i]))
+            return population[Random.Shared.Next(0, population.Count)];
+        }
+
+        double randomNumber = Random.Shared.NextDouble();
+        var index = 0;
+        while (randomNumber > 0)
+        {
+            randomNumber -= probArr[index++];
+        }
+
+        return population[index - 1];
+    }
+
+    private void Crossover()
+    {
+        children = new List<Chromosome>();
+        for (int i = 0; i < parents.Count; i += 2)
+        {
+            UniformCrossover(parents[i], parents[i + 1]);
+        }
+    }
+
+    private void UniformCrossover(Chromosome p1, Chromosome p2)
+    {
+        char[] p1Copy = new char[p1.chromosome.Length];
+        char[] p2Copy = new char[p2.chromosome.Length];
+
+        for (int i = 0; i < p1.chromosome.Length; i++)
+        {
+            int num = Random.Shared.Next(1, 3);
+            if (num == 1)
             {
-                return population[i];
+                p1Copy[i] = p1.chromosome[i];
+                p2Copy[i] = p2.chromosome[i];
+            }
+            else
+            {
+                p1Copy[i] = p2.chromosome[i];
+                p2Copy[i] = p1.chromosome[i];
             }
         }
 
-        return population[0];
+        var f1 = Fitness(p1Copy);
+        var f2 = Fitness(p2Copy);
+
+        var c1 = new Chromosome(p1Copy, f1.fitness, f1.weight);
+        var c2 = new Chromosome(p2Copy, f2.fitness, f2.weight);
+
+        children.Add(c1);
+        children.Add(c2);
     }
 
-    private List<char[]> Shuffle(List<char[]> list)
+    private void TwoPointCrossover(Chromosome p1, Chromosome p2)
     {
-        int n = list.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = Random.Shared.Next(n + 1);
-            (list[k], list[n]) = (list[n], list[k]);
-        }
+        int firstPoint = Random.Shared.Next((int)(p1.chromosome.Length * 0.20), (int)(p1.chromosome.Length * 0.45));
+        int secondPoint = Random.Shared.Next((int)(p1.chromosome.Length * 0.65), (int)(p1.chromosome.Length * 0.85));
 
-        return list;
-    }
+        char[] p1FirstPart = p1.chromosome[0..firstPoint].ToArray();
+        char[] p2FirstPart = p2.chromosome[0..firstPoint].ToArray();
 
-    private void Crossover(char[] p1, char[] p2)
-    {
-        int firstPoint = Random.Shared.Next(1, p1.Length);
-        int secondPoint = 0;
-        do
-        {
-            secondPoint = Random.Shared.Next(1, p1.Length);
-        } while (firstPoint == secondPoint);
+        char[] p1Middle = p1.chromosome[firstPoint..secondPoint].ToArray();
+        char[] p2Middle = p2.chromosome[firstPoint..secondPoint].ToArray();
 
-        if (firstPoint > secondPoint)
-        {
-            (firstPoint, secondPoint) = (secondPoint, firstPoint);
-        }
+        char[] p1SecondPart = p1.chromosome[secondPoint..p1.chromosome.Length].ToArray();
+        char[] p2SecondPart = p2.chromosome[secondPoint..p2.chromosome.Length].ToArray();
 
-        char[] p1FirstPart = p1[0..firstPoint];
-        char[] p2FirstPart = p2[0..firstPoint];
+        var p1Copy = p2SecondPart.Concat(p1Middle).Concat(p2FirstPart).ToArray();
+        var p2Copy = p1SecondPart.Concat(p2Middle).Concat(p1FirstPart).ToArray();
 
-        char[] p1Middle = p1[firstPoint..secondPoint];
-        char[] p2Middle = p2[firstPoint..secondPoint];
+        var f1 = Fitness(p1Copy);
+        var f2 = Fitness(p2Copy);
 
-        char[] p1SecondPart = p1[secondPoint..p1.Length];
-        char[] p2SecondPart = p2[secondPoint..p2.Length];
+        var c1 = new Chromosome(p1Copy, f1.fitness, f1.weight);
+        var c2 = new Chromosome(p2Copy, f2.fitness, f2.weight);
 
-        p1 = p2FirstPart.Concat(p1Middle).Concat(p2SecondPart).ToArray();
-        p2 = p1FirstPart.Concat(p2Middle).Concat(p1SecondPart).ToArray();
-
-        children.Add(p1);
-        children.Add(p2);
+        children.Add(c1);
+        children.Add(c2);
     }
 
     private void Mutation()
     {
-        for (int i = 0; i < children.Count; i++)
+        foreach (var child in children)
         {
-            for (int j = 0; j < children[i].Length; j++)
-            {
-                var child = children[j];
-                if (!SuccessfulMutation()) continue;
-                if (child[j] == '0') child[j] = '1';
-                else if (child[j] == '1') child[j] = '0';
-            }
+            MutationPerChromosome(child);
+            //MutationPerGene(child);
         }
     }
 
-    private int GetWeight(char[] chromosomes)
+    private void MutationPerChromosome(Chromosome child)
     {
-        int value = 0;
-        for (int i = 0; i < chromosomes.Length; i++)
-        {
-            if (chromosomes[i] == '1')
-            {
-                value += items.ElementAt(i).Key;
-            }
-        }
-
-        return value;
+        var rand = Random.Shared.Next(1, 100);
+        if (rand > 5 * mutationRate * 100) return;
+        var randIndex = Random.Shared.Next(0, items.Count);
+        child.chromosome[randIndex] = child.chromosome[randIndex] == '0' ? '1' : '0';
     }
 
-    private bool SuccessfulMutation()
+    private static void MutationPerGene(char[] chromosome, double rate)
     {
-        int rnd = Random.Shared.Next(1, 100);
-        return rnd <= mutationRate * 100;
+        for (int j = 0; j < chromosome.Length; j++)
+        {
+            if (!SuccessfulMutation(rate)) continue;
+            if (chromosome[j] == '0') chromosome[j] = '1';
+            else if (chromosome[j] == '1') chromosome[j] = '0';
+        }
+    }
+
+    private static bool SuccessfulMutation(double rate)
+    {
+        var rnd = Random.Shared.Next(1, 100);
+        return rnd <= rate * 100;
+    }
+
+    private void PrintElite(int generation)
+    {
+        Console.WriteLine(
+            $"Best Solution After {generation} Generations - Weight - {elite.weight} Value - {elite.fitness}");
+    }
+
+    private void Shuffle(char[] probArr)
+    {
+        int n = probArr.Length;
+        while (n > 1)
+        {
+            n--;
+            int k = Random.Shared.Next(n + 1);
+            (probArr[k], probArr[n]) = (probArr[n], probArr[k]);
+        }
+    }
+
+    private void Shuffle(List<Chromosome> chromosomes)
+    {
+        int n = chromosomes.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = Random.Shared.Next(n + 1);
+            (chromosomes[k], chromosomes[n]) = (chromosomes[n], chromosomes[k]);
+        }
     }
 }

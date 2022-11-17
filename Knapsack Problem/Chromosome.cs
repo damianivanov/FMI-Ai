@@ -12,6 +12,11 @@ class Chromosome
         this.chromosome = chromosome;
         this.fitness = fitness;
         this.weight = weight;
-        this.chromosomeString = chromosome == null ? " " : string.Join(',',chromosome);
+        UpdateString();
+    }
+
+    public void UpdateString()
+    {
+        chromosomeString = chromosome == null ? " " : string.Join(',', chromosome);
     }
 }

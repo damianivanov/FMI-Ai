@@ -1,19 +1,23 @@
-using Microsoft.VisualBasic;
+namespace Knapsack_Problem;
 
 class Solver
 {
-    private int capacityOfBag;
-    private int numberOfItems;
+    private readonly int capacityOfBag;
+    private readonly int numberOfItems;
     private List<KeyValuePair<int, int>> items; //0-weight, 1-value
     private Chromosome elite;
     private List<Chromosome> population = new List<Chromosome>();
     private List<int> fitnesses;
     private List<Chromosome> children;
     private List<Chromosome> parents;
+
     private const double mutationRate = 0.01;
-    private int generationSize;
+    private const double generationsWithoutChangePerc = 0.5;
+    private const int generationSize = 100;
+    private const int generationsLimit = 5000;
+
     private int crossoverSize;
-    private int generationsWithoutChangeInElite = 0;
+    private int generationsWithoutChangeInElite;
 
     public Solver(int capacityOfBag, int numberOfItems, List<KeyValuePair<int, int>> items)
     {
@@ -21,13 +25,11 @@ class Solver
         this.items = items;
         this.capacityOfBag = capacityOfBag;
         this.numberOfItems = numberOfItems;
-        this.generationSize = items.Count < 8 ? (int)Math.Pow(2, items.Count) : 100;
         this.crossoverSize = (int)(Math.Round((double)(generationSize / 4), MidpointRounding.AwayFromZero) * 2);
     }
 
     public void Solve()
     {
-        const int generationsLimit = 10000;
         population = GeneratePopulation(generationSize);
         for (int j = 1; j <= generationsLimit; j++)
         {
@@ -35,24 +37,23 @@ class Solver
             Crossover();
             Mutation();
             EvaluateChildren();
-            if (generationsWithoutChangeInElite >= generationsLimit * 0.1 && elite.fitness != 0)
+
+            //Checking for local extremum
+            if (generationsWithoutChangeInElite >= generationsLimit * generationsWithoutChangePerc &&
+                elite.fitness != 0)
             {
                 PrintElite(j);
                 break;
             }
 
             population.AddRange(children);
-            population.Add(elite);
             population = population
                 .OrderByDescending(x => x.fitness)
                 .ThenBy(x => x.weight)
-                .DistinctBy(x => string.Join(',', x.chromosome))
+                .DistinctBy(x => x.chromosomeString)
                 .Take(generationSize)
                 .ToList();
-            if (j is 10 or 100 or 300 or 500 or generationsLimit)
-            {
-                PrintElite(j);
-            }
+            if (j is 10 or 100 or 300 or 1500 or generationsLimit) PrintElite(j);
         }
     }
 
@@ -63,6 +64,7 @@ class Solver
             var result = Fitness(child.chromosome);
             child.fitness = result.fitness;
             child.weight = result.weight;
+            child.UpdateString();
         }
     }
 
@@ -175,56 +177,28 @@ class Solver
 
     private void UniformCrossover(Chromosome p1, Chromosome p2)
     {
-        char[] p1Copy = new char[p1.chromosome.Length];
-        char[] p2Copy = new char[p2.chromosome.Length];
-
+        char[] firstChild = new char[p1.chromosome.Length];
+        char[] secondChild = new char[p2.chromosome.Length];
         for (int i = 0; i < p1.chromosome.Length; i++)
         {
             int num = Random.Shared.Next(1, 3);
             if (num == 1)
             {
-                p1Copy[i] = p1.chromosome[i];
-                p2Copy[i] = p2.chromosome[i];
+                firstChild[i] = p1.chromosome[i];
+                secondChild[i] = p2.chromosome[i];
             }
             else
             {
-                p1Copy[i] = p2.chromosome[i];
-                p2Copy[i] = p1.chromosome[i];
+                firstChild[i] = p2.chromosome[i];
+                secondChild[i] = p1.chromosome[i];
             }
         }
 
-        var f1 = Fitness(p1Copy);
-        var f2 = Fitness(p2Copy);
+        var r1 = Fitness(firstChild);
+        var r2 = Fitness(secondChild);
 
-        var c1 = new Chromosome(p1Copy, f1.fitness, f1.weight);
-        var c2 = new Chromosome(p2Copy, f2.fitness, f2.weight);
-
-        children.Add(c1);
-        children.Add(c2);
-    }
-
-    private void TwoPointCrossover(Chromosome p1, Chromosome p2)
-    {
-        int firstPoint = Random.Shared.Next((int)(p1.chromosome.Length * 0.20), (int)(p1.chromosome.Length * 0.45));
-        int secondPoint = Random.Shared.Next((int)(p1.chromosome.Length * 0.65), (int)(p1.chromosome.Length * 0.85));
-
-        char[] p1FirstPart = p1.chromosome[0..firstPoint].ToArray();
-        char[] p2FirstPart = p2.chromosome[0..firstPoint].ToArray();
-
-        char[] p1Middle = p1.chromosome[firstPoint..secondPoint].ToArray();
-        char[] p2Middle = p2.chromosome[firstPoint..secondPoint].ToArray();
-
-        char[] p1SecondPart = p1.chromosome[secondPoint..p1.chromosome.Length].ToArray();
-        char[] p2SecondPart = p2.chromosome[secondPoint..p2.chromosome.Length].ToArray();
-
-        var p1Copy = p2SecondPart.Concat(p1Middle).Concat(p2FirstPart).ToArray();
-        var p2Copy = p1SecondPart.Concat(p2Middle).Concat(p1FirstPart).ToArray();
-
-        var f1 = Fitness(p1Copy);
-        var f2 = Fitness(p2Copy);
-
-        var c1 = new Chromosome(p1Copy, f1.fitness, f1.weight);
-        var c2 = new Chromosome(p2Copy, f2.fitness, f2.weight);
+        var c1 = new Chromosome(firstChild, r1.fitness, r1.weight);
+        var c2 = new Chromosome(secondChild, r2.fitness, r2.weight);
 
         children.Add(c1);
         children.Add(c2);
@@ -235,7 +209,6 @@ class Solver
         foreach (var child in children)
         {
             MutationPerChromosome(child);
-            //MutationPerGene(child);
         }
     }
 
@@ -243,51 +216,13 @@ class Solver
     {
         var rand = Random.Shared.Next(1, 100);
         if (rand > 5 * mutationRate * 100) return;
-        var randIndex = Random.Shared.Next(0, items.Count);
+        var randIndex = Random.Shared.Next(0, numberOfItems);
         child.chromosome[randIndex] = child.chromosome[randIndex] == '0' ? '1' : '0';
-    }
-
-    private static void MutationPerGene(char[] chromosome, double rate)
-    {
-        for (int j = 0; j < chromosome.Length; j++)
-        {
-            if (!SuccessfulMutation(rate)) continue;
-            if (chromosome[j] == '0') chromosome[j] = '1';
-            else if (chromosome[j] == '1') chromosome[j] = '0';
-        }
-    }
-
-    private static bool SuccessfulMutation(double rate)
-    {
-        var rnd = Random.Shared.Next(1, 100);
-        return rnd <= rate * 100;
     }
 
     private void PrintElite(int generation)
     {
         Console.WriteLine(
             $"Best Solution After {generation} Generations - Weight - {elite.weight} Value - {elite.fitness}");
-    }
-
-    private void Shuffle(char[] probArr)
-    {
-        int n = probArr.Length;
-        while (n > 1)
-        {
-            n--;
-            int k = Random.Shared.Next(n + 1);
-            (probArr[k], probArr[n]) = (probArr[n], probArr[k]);
-        }
-    }
-
-    private void Shuffle(List<Chromosome> chromosomes)
-    {
-        int n = chromosomes.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = Random.Shared.Next(n + 1);
-            (chromosomes[k], chromosomes[n]) = (chromosomes[n], chromosomes[k]);
-        }
     }
 }

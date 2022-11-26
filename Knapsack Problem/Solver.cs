@@ -12,7 +12,7 @@ class Solver
     private List<Chromosome> parents;
 
     private const double mutationRate = 0.01;
-    private const double generationsWithoutChangePerc = 0.5;
+    private const double generationsWithoutChangePerc = 0.3;
     private const int generationSize = 100;
     private const int generationsLimit = 5000;
 

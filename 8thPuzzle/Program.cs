@@ -33,7 +33,7 @@ var watch = Stopwatch.StartNew();
 board.Solve();
 watch.Stop();
 PrintSolution(board);
-Console.WriteLine(watch.Elapsed.ToString(@"ss\:fff"));
+Console.WriteLine(watch.Elapsed.ToString(@"mm\:ss\:fff"));
 
 
 string PrintField(int[,] array)

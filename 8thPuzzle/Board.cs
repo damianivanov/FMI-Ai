@@ -123,8 +123,6 @@ class Board
     {
         (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
             (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
-        // (_tiles[coordinates.X, coordinates.Y], _tiles[newX, newY]) =
-        //     (_tiles[newX, newY], _tiles[coordinates.X, coordinates.Y]);
     }
 
     private void Ida_star()

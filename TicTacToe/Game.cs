@@ -2,23 +2,23 @@ namespace TicTacToe;
 
 class Game
 {
-    const char AISymbol = 'X';
-    const char PlayerSymbol = 'O';
-    private bool isPlayersTurn = true;
-    private char[] board;
-    private int depth = 0;
+    private const char AiSymbol = 'X';
+    private const char PlayerSymbol = 'O';
+    private bool _isPlayersTurn = true;
+    private readonly char[] _board;
+    private int _depth;
 
     public Game()
     {
-        board = new char[9];
-        depth = 0;
+        _board = new char[9];
+        _depth = 0;
         for (int i = 0; i < 9; i++)
-            board[i] = '-';
+            _board[i] = '-';
     }
 
     public void Play()
     {
-        isPlayersTurn = InputForFirst();
+        _isPlayersTurn = InputForFirst();
 
         for (int i = 0; i <= 9; i++)
         {
@@ -30,11 +30,11 @@ class Game
                 break;
             }
 
-            if (isPlayersTurn)
+            if (_isPlayersTurn)
             {
                 Console.WriteLine($"Enter valid indexes for placing {PlayerSymbol}");
-                bool validIndexes = false;
-                int[] indexes = new int[2];
+                bool validIndexes;
+                int[] indexes;
                 do
                 {
                     indexes = Console.ReadLine()!
@@ -51,12 +51,12 @@ class Game
                 AiPlay();
             }
 
-            isPlayersTurn = !isPlayersTurn;
+            _isPlayersTurn = !_isPlayersTurn;
         }
     }
     private int Minimax(int alpha, int beta, bool maximizer)
     {
-        var score = 9 - depth;
+        var score = 9 - _depth;
         var eval = IsFinal();
         if (eval > 0) return eval + score;
         if (eval < 0) return eval - score;
@@ -68,20 +68,20 @@ class Game
 
             for (var i = 0; i < 9; i++)
             {
-                if (board[i] != '-') continue;
+                if (_board[i] != '-') continue;
 
-                board[i] = AISymbol;
-                depth++;
+                _board[i] = AiSymbol;
+                _depth++;
 
                 var evaluation = Minimax(alpha, beta, false);
 
-                board[i] = '-';
-                depth--;
+                _board[i] = '-';
+                _depth--;
 
                 max = Math.Max(max, evaluation);
                 alpha = Math.Max(alpha, evaluation);
 
-                if (beta <= alpha) break;
+                if (beta <= alpha) break; //alpha-beta puring part
             }
             return max;
         }
@@ -89,20 +89,20 @@ class Game
         var min = int.MaxValue;
         for (var i = 0; i < 9; i++)
         {
-            if (board[i] != '-') continue;
+            if (_board[i] != '-') continue;
 
-            board[i] = PlayerSymbol;
-            depth++;
+            _board[i] = PlayerSymbol;
+            _depth++;
 
             var evaluation = Minimax(alpha, beta, true);
 
-            board[i] = '-';
-            depth--;
+            _board[i] = '-';
+            _depth--;
 
             min = Math.Min(min, evaluation);
             beta = Math.Min(beta, evaluation);
 
-            if (beta <= alpha) break;
+            if (beta <= alpha) break; //alpha-beta puring part
         }
         return min;
     }
@@ -124,15 +124,15 @@ class Game
 
         for (var i = 0; i < 9; i++)
         {
-            if (board[i] != '-') continue;
+            if (_board[i] != '-') continue;
 
-            board[i] = AISymbol;
-            depth++;
+            _board[i] = AiSymbol;
+            _depth++;
 
             var curr = Minimax(int.MinValue, int.MaxValue, false);
 
-            board[i] = '-';
-            depth--;
+            _board[i] = '-';
+            _depth--;
 
             if (curr > bestEvaluation)
             {
@@ -146,14 +146,14 @@ class Game
     private void AiPlay()
     {
         var index = NextMove();
-        board[index] = AISymbol;
-        depth++;
+        _board[index] = AiSymbol;
+        _depth++;
     }
     private void PlaceChoice(int[] indexes)
     {
         var index = (indexes[0]-1) * 3 + (indexes[1]-1);
-        board[index] = PlayerSymbol;
-        depth++;
+        _board[index] = PlayerSymbol;
+        _depth++;
     }
     private bool Equal(char a, char b, char c)
     {
@@ -162,36 +162,36 @@ class Game
     private int IsFinal()
     {
         char winner = '-';
-        if (Equal(board[0], board[4], board[8]))
-            winner = board[0];
+        if (Equal(_board[0], _board[4], _board[8]))
+            winner = _board[0];
 
-        if (Equal(board[2], board[4], board[6]))
-            winner = board[2];
+        if (Equal(_board[2], _board[4], _board[6]))
+            winner = _board[2];
 
         //rows
         for (int i = 0; i < 9; i += 3)
         {
-            if (Equal(board[i], board[i + 1], board[i + 2]))
+            if (Equal(_board[i], _board[i + 1], _board[i + 2]))
             {
-                winner = board[i];
+                winner = _board[i];
             }
         }
 
         //columns
         for (int i = 0; i < 3; i++)
         {
-            if (Equal(board[i], board[i + 3], board[i + 6]))
+            if (Equal(_board[i], _board[i + 3], _board[i + 6]))
             {
-                winner = board[i];
+                winner = _board[i];
             }
         }
 
         if (winner == '-') return 0;
-        return winner == AISymbol ? 1 : -1;
+        return winner == AiSymbol ? 1 : -1;
     }
     private bool IsDraw()
     {
-        return depth == 9;
+        return _depth == 9;
     }
     private bool IsOver()
     {
@@ -199,7 +199,7 @@ class Game
     }
     private static bool IsSymbol(char c)
     {
-        return c is PlayerSymbol or AISymbol;
+        return c is PlayerSymbol or AiSymbol;
     }
     private bool InputForFirst()
     {
@@ -212,7 +212,7 @@ class Game
     {
         for (int i = 0; i < 9; i+=3)
         {
-            Console.WriteLine(board[i] + "|" + board[i+1] + "|" + board[i+2]);
+            Console.WriteLine(_board[i] + "|" + _board[i+1] + "|" + _board[i+2]);
         }
     }
     private bool ValidInput(int[] indexes)
@@ -221,7 +221,7 @@ class Game
         if (!validIndexes) return validIndexes;
         int i = indexes[0] - 1;
         int j = indexes[1] - 1;
-        char currChar = board[(i*3)+j];
+        char currChar = _board[(i*3)+j];
         return !IsSymbol(currChar);
     }
     private bool ValidIndexes(int[] indexes)

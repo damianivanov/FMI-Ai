@@ -2,9 +2,11 @@
 using System.Linq;
 using N_Queens;
 
-// int n = int.Parse(Console.ReadLine()!);
-int n = 1_000_000;
-for (int i = 0; i < 10; i++)
+int n = int.Parse(Console.ReadLine()!);
+//int n = 10_000;
+// int n = 100_000;
+//int n = 1_000_000;
+for (int i = 0; i < 1; i++)
 {
     var watch = Stopwatch.StartNew();
     SolveSwaps(n);

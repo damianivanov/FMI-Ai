@@ -17,8 +17,8 @@ class Field
 
         queensPerRow = new int[n];
         queensPerMD = new int[diagonals];
-        queensPerSD = new int[diagonals];
-        // InitMinConflict();
+        queensPerSD = new int[diagonals]; 
+        //InitMinConflict();
         RandomInit();
     }
 
